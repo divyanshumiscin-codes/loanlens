@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LoanLens | Loan approval predictor</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <h1>LoanLens</h1>
+    <p>Know your chances before you apply. Enter your details and get an instant, explained estimate.</p>
+    <nav class="nav"><a href="/insights">Model insights</a></nav>
+  </div>
+</header>
+
+<main>
+  <form id="form" class="panel" novalidate>
+    <div class="presets"><span>Try an example:</span>
+      <button type="button" class="ghost" data-preset="strong">Strong profile</button>
+      <button type="button" class="ghost" data-preset="average">Average profile</button>
+      <button type="button" class="ghost" data-preset="weak">Weak profile</button>
+    </div>
+    <section class="group">
+      <h3>About you</h3>
+      <div class="fields">
+      <label>Married
+        <select name="Married"><option>Yes</option><option>No</option></select></label>
+      <label>Dependents
+        <select name="Dependents"><option>0</option><option>1</option><option>2</option><option>3+</option></select></label>
+      <label>Education
+        <select name="Education"><option>Graduate</option><option>Not Graduate</option></select></label>
+      <label>Self-employed
+        <select name="Self_Employed"><option>No</option><option>Yes</option></select></label>
+    </div>
+    </section>
+
+    <section class="group">
+      <h3>Income and property</h3>
+      <div class="fields">
+      <label>Monthly income (₹)
+        <input type="number" name="ApplicantIncome" value="5000" min="0"></label>
+      <label>Co-applicant monthly income (₹)
+        <input type="number" name="CoapplicantIncome" value="0" min="0"></label>
+      <label>Credit history
+        <select name="Credit_History"><option value="1">Good: past loans repaid on time</option><option value="0">None, or missed payments</option></select></label>
+      <label>Property area
+        <select name="Property_Area"><option>Urban</option><option>Semiurban</option><option>Rural</option></select></label>
+    </div>
+    </section>
+
+    <section class="group">
+      <h3>The loan</h3>
+      <div class="fields">
+      <label class="wide">Loan amount <output id="amtOut"></output>
+        <input type="range" name="LoanAmount" min="10" max="1000" step="10" value="130"></label>
+      <label class="wide">Repayment term <output id="termOut"></output>
+        <input type="range" name="Loan_Amount_Term" min="12" max="480" step="12" value="360"></label>
+      <p class="live">Estimated EMI at 9% interest: <strong id="emiLive"></strong> per month</p>
+    </div>
+    </section>
+
+    <button type="submit" id="go">Check eligibility</button>
+  </form>
+
+  <aside id="result" class="panel" aria-live="polite">
+    <svg id="gauge" viewBox="0 0 200 118" role="img" aria-label="Approval chance gauge">
+      <path class="track" d="M20 100 A80 80 0 0 1 180 100" pathLength="100"/>
+      <path class="arc" id="arc" d="M20 100 A80 80 0 0 1 180 100" pathLength="100" stroke-dasharray="0.01 100"/>
+      <text id="pct" x="100" y="92" text-anchor="middle">–</text>
+      <text x="100" y="112" text-anchor="middle" class="cap">chance of approval</text>
+    </svg>
+    <div id="details"><p class="empty">Fill in the form and choose Check eligibility to see your result here.</p></div>
+  </aside>
+</main>
+
+<section class="history wrap">
+  <div class="head"><h2>Recent checks</h2><div class="actions"><a class="ghost" href="/api/export.csv">Export CSV</a><button type="button" id="clearBtn" class="ghost">Clear history</button></div></div>
+  <div class="scroll">
+    <table>
+      <thead><tr><th>Time</th><th>Income</th><th>Loan</th><th>Chance</th><th>Result</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+</section>
+
+<footer class="foot">LoanLens: Loan Approval Predictor | Diploma in Computer Engineering, Sigma University, Vadodara</footer>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

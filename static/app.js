@@ -1,0 +1,114 @@
+const form = document.getElementById("form");
+const details = document.getElementById("result").querySelector("#details");
+const gauge = document.getElementById("gauge");
+const arc = document.getElementById("arc");
+const pctText = document.getElementById("pct");
+const rows = document.getElementById("rows");
+const btn = document.getElementById("go");
+const inr = n => "₹" + Math.round(n).toLocaleString("en-IN");
+const BANDS = {likely: ["Likely approved", "yes"], borderline: ["Borderline", "mid"], unlikely: ["Unlikely", "no"]};
+const PRESETS = {
+  strong: {Married: "Yes", Dependents: "0", Education: "Graduate", Self_Employed: "No", ApplicantIncome: 8000, CoapplicantIncome: 3000, Credit_History: "1", Property_Area: "Semiurban", LoanAmount: 120, Loan_Amount_Term: 360},
+  average: {Married: "Yes", Dependents: "1", Education: "Graduate", Self_Employed: "No", ApplicantIncome: 4000, CoapplicantIncome: 1500, Credit_History: "1", Property_Area: "Urban", LoanAmount: 150, Loan_Amount_Term: 360},
+  weak: {Married: "No", Dependents: "3+", Education: "Not Graduate", Self_Employed: "Yes", ApplicantIncome: 2500, CoapplicantIncome: 0, Credit_History: "0", Property_Area: "Rural", LoanAmount: 200, Loan_Amount_Term: 240}
+};
+
+// Small helper: make an element with text (textContent keeps it safe from injection)
+function el(tag, text, cls) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text;
+  if (cls) node.className = cls;
+  return node;
+}
+
+// Same EMI formula as the backend, so the live preview matches the final answer
+const emi = (p, n) => { const r = 9 / 1200; return p * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1); };
+
+function syncLoan() {
+  const amount = +form.LoanAmount.value, term = +form.Loan_Amount_Term.value;
+  document.getElementById("amtOut").textContent = inr(amount * 1000);
+  document.getElementById("termOut").textContent = term + " months (" + +(term / 12).toFixed(1) + " years)";
+  document.getElementById("emiLive").textContent = inr(emi(amount * 1000, term));
+}
+form.LoanAmount.addEventListener("input", syncLoan);
+form.Loan_Amount_Term.addEventListener("input", syncLoan);
+syncLoan();
+
+function showResult(d) {
+  const pct = Math.round(d.probability * 100);
+  const [word, cls] = BANDS[d.band];
+  gauge.setAttribute("class", cls);
+  arc.setAttribute("stroke-dasharray", Math.max(pct, 0.01) + " 100"); // CSS animates this
+  pctText.textContent = pct + "%";
+
+  const facts = el("dl");
+  [["Estimated EMI", inr(d.emi) + " / month"], ["EMI as share of income", d.emi_share.toFixed(0) + "%"]]
+    .forEach(([k, v]) => facts.append(el("dt", k), el("dd", v)));
+  const why = el("ul");
+  d.reasons.forEach(r => why.append(el("li", r)));
+
+  const printBtn = el("button", "Print result", "ghost");
+  printBtn.type = "button";
+  printBtn.addEventListener("click", () => window.print());
+  const moved = el("ul", "", "drivers");
+  d.drivers.forEach(x => {
+    const li = el("li", x.label);
+    li.append(el("b", (x.effect > 0 ? "+" : "") + x.effect + " points", x.effect > 0 ? "up" : "down"));
+    moved.append(li);
+  });
+  details.replaceChildren(
+    el("div", word, "stamp " + cls),
+    ...d.warnings.map(w => el("p", w, "warn")),
+    facts, el("h3", "Why this result"), why,
+    ...(d.drivers.length ? [el("h3", "What moved the score"), el("p", "Compared with a typical applicant in the training data.", "note"), moved] : []),
+    printBtn
+  );
+}
+
+async function loadHistory() {
+  const items = await (await fetch("/api/history")).json();
+  rows.replaceChildren(...items.map(i => {
+    const tr = el("tr");
+    [i.created_at, inr(i.ApplicantIncome + i.CoapplicantIncome), inr(i.LoanAmount * 1000),
+     Math.round(i.probability * 100) + "%"].forEach(v => tr.append(el("td", v)));
+    const td = el("td");
+    td.append(el("span", i.decision, "pill " + (i.decision === "Approved" ? "yes" : "no")));
+    tr.append(td);
+    return tr;
+  }));
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  btn.disabled = true; btn.textContent = "Checking...";
+  try {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(Object.fromEntries(new FormData(form)))
+    });
+    const data = await res.json();
+    if (!res.ok) { details.replaceChildren(el("p", Object.values(data.errors).join(" "), "error")); return; }
+    showResult(data);
+    loadHistory();
+  } catch (err) {
+    details.replaceChildren(el("p", "Could not reach the server. Is app.py still running?", "error"));
+  } finally {
+    btn.disabled = false; btn.textContent = "Check eligibility";
+  }
+});
+
+loadHistory();
+
+document.getElementById("clearBtn").addEventListener("click", async () => {
+  if (!confirm("Delete all saved checks?")) return;
+  await fetch("/api/history", {method: "DELETE"});
+  loadHistory();
+});
+
+// Example profiles: fill the form and run the check
+document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
+  Object.entries(PRESETS[b.dataset.preset]).forEach(([k, v]) => { form.elements[k].value = v; });
+  syncLoan();
+  form.requestSubmit();
+}));
