@@ -1,8 +1,17 @@
 """Creates a practice dataset (data/loan_data.csv) with the same columns as the
-popular Kaggle 'Loan Prediction' dataset. For your final submission, replace
-that CSV with the real one and run train_model.py again."""
+Kaggle 'Loan Prediction' dataset. It is only a fallback for when the real
+dataset is missing, and it never overwrites an existing file."""
+import os
+import sys
+
 import numpy as np
 import pandas as pd
+
+OUTPUT = "data/loan_data.csv"
+if os.path.exists(OUTPUT):  # protect the real dataset
+    print(OUTPUT, "already exists, so nothing was changed.")
+    sys.exit()
+os.makedirs("data", exist_ok=True)
 
 rng = np.random.default_rng(42)
 n = 1000
@@ -26,5 +35,5 @@ score = (-1 + 3.5 * df.Credit_History - 8 * ratio
          + rng.normal(0, .8, n))
 df["Loan_Status"] = np.where(score > 0.5, "Y", "N")
 df.insert(0, "Loan_ID", [f"LP{1000 + i}" for i in range(n)])
-df.to_csv("data/loan_data.csv", index=False)
-print("Saved data/loan_data.csv", df.shape, "| approval rate:", round((df.Loan_Status == "Y").mean(), 2))
+df.to_csv(OUTPUT, index=False)
+print("Saved", OUTPUT, df.shape, "| approval rate:", round((df.Loan_Status == "Y").mean(), 2))

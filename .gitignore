@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 loan.db
 .vscode/
+model.joblib
+metrics.json
+baseline.json
