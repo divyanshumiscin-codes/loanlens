@@ -3,6 +3,7 @@ import csv
 import io
 import json
 import sqlite3
+import sys
 from datetime import datetime
 
 import joblib
@@ -10,7 +11,10 @@ import pandas as pd
 from flask import Flask, Response, jsonify, render_template, request
 
 app = Flask(__name__)
-model = joblib.load("model.joblib")
+try:
+    model = joblib.load("model.joblib")
+except FileNotFoundError:
+    sys.exit("model.joblib not found. Run 'python train_model.py' first, then start the app again.")
 DB = "loan.db"
 LABELS = {"ApplicantIncome": "Applicant income", "CoapplicantIncome": "Co-applicant income", "LoanAmount": "Loan amount",
           "Loan_Amount_Term": "Loan term", "Credit_History": "Credit history", "Married": "Marital status",
