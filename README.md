@@ -2,8 +2,6 @@
 
 LoanLens is a web app that estimates the chance of a loan being approved and explains the result in plain language. It was built as a Diploma in Computer Engineering project at Sigma University, Vadodara.
 
-**Author:** Divyanshu Singh
-
 ## What it does
 
 You enter an applicant's details (income, loan amount, credit history and so on). The app shows a live approval gauge, a confidence band, the monthly EMI, the main factors behind the result, and a suggestion for a smaller loan that would be approved. Every check is saved in a local database.
