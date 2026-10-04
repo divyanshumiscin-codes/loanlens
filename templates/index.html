@@ -47,6 +47,9 @@
         <select name="Credit_History"><option value="1">Good: past loans repaid on time</option><option value="0">None, or missed payments</option></select></label>
       <label>Property area
         <select name="Property_Area"><option>Urban</option><option>Semiurban</option><option>Rural</option></select></label>
+      <label class="wide">CIBIL score (optional) <output id="cibilOut"></output>
+        <input type="range" name="Cibil_Score" min="300" max="900" step="10" value="750" disabled></label>
+      <label class="check wide"><input type="checkbox" id="useCibil"> I know my CIBIL score (use it instead of the credit history choice)</label>
     </div>
     </section>
 

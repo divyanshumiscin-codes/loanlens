@@ -97,3 +97,18 @@ a.ghost:hover { background:#eef2f8; }
   color: #5b6b7f;
   text-align: center;
 }
+
+/* CIBIL score: optional form field and the meter under the result */
+.check { flex-direction: row; align-items: center; gap: 8px; }
+.check input { margin: 0; padding: 0; accent-color: var(--navy2); }
+.cibil { margin-top: 18px; }
+.cbar { position: relative; display: flex; height: 14px; margin: 14px 0 10px; }
+.cbar span { display: block; height: 100%; }
+.cbar span:first-child { border-radius: 7px 0 0 7px; }
+.cbar span:nth-child(3) { border-radius: 0 7px 7px 0; }
+.z-weak { flex: 350; background: var(--no); }
+.z-borderline { flex: 100; background: var(--gold); }
+.z-good { flex: 150; background: var(--yes); }
+.pin { position: absolute; top: -5px; width: 4px; height: 24px; background: var(--navy); border-radius: 2px; transform: translateX(-50%); }
+.cibil input[type=range] { width: 100%; }
+.cread { margin: 4px 0 6px; font-weight: 600; font-size: .93rem; }

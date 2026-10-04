@@ -34,6 +34,41 @@ form.LoanAmount.addEventListener("input", syncLoan);
 form.Loan_Amount_Term.addEventListener("input", syncLoan);
 syncLoan();
 
+// CIBIL is optional: the slider is only sent when the box is ticked
+const useCibil = document.getElementById("useCibil");
+function syncCibil() {
+  form.Cibil_Score.disabled = !useCibil.checked;
+  document.getElementById("cibilOut").textContent = useCibil.checked ? form.Cibil_Score.value : "not used";
+}
+useCibil.addEventListener("change", syncCibil);
+form.Cibil_Score.addEventListener("input", syncCibil);
+syncCibil();
+
+// The meter under the result: drag to see the chance at other scores (no server call needed)
+function cibilMeter(c) {
+  const zoneOf = s => s >= 750 ? "good" : s >= 650 ? "borderline" : "weak";
+  const NAMES = {weak: "weak zone", borderline: "borderline zone", good: "good zone"};
+  const box = el("div", "", "cibil");
+  const bar = el("div", "", "cbar");
+  ["weak", "borderline", "good"].forEach(z => bar.append(el("span", "", "z-" + z)));
+  const pin = el("i", "", "pin");
+  bar.append(pin);
+  const slider = el("input");
+  slider.type = "range"; slider.min = 300; slider.max = 900; slider.step = 10;
+  slider.value = c.used ? c.score : 750;
+  const read = el("p", "", "cread");
+  const update = () => {
+    const s = +slider.value, z = zoneOf(s);
+    pin.style.left = ((s - 300) / 6) + "%";
+    read.textContent = "CIBIL " + s + " (" + NAMES[z] + "): chance about " + Math.round(c.chances[z] * 100) + "%";
+  };
+  slider.addEventListener("input", update);
+  update();
+  box.append(el("h3", "CIBIL score meter"), bar, slider, read,
+    el("p", "The zones are an assumption and lenders differ. The model has no CIBIL data: a good score is treated as good credit history, a weak score as poor credit history, and borderline as the average of the two.", "note"));
+  return box;
+}
+
 function showResult(d) {
   const pct = Math.round(d.probability * 100);
   const [word, cls] = BANDS[d.band];
@@ -61,6 +96,7 @@ function showResult(d) {
     ...d.warnings.map(w => el("p", w, "warn")),
     facts, el("h3", "Why this result"), why,
     ...(d.drivers.length ? [el("h3", "What moved the score"), el("p", "Compared with a typical applicant in the training data.", "note"), moved] : []),
+    cibilMeter(d.cibil),
     printBtn
   );
 }
@@ -106,9 +142,11 @@ document.getElementById("clearBtn").addEventListener("click", async () => {
   loadHistory();
 });
 
-// Example profiles: fill the form and run the check
+// Example profiles: fill the form (they use the credit history choice, not CIBIL) and run the check
 document.querySelectorAll("[data-preset]").forEach(b => b.addEventListener("click", () => {
   Object.entries(PRESETS[b.dataset.preset]).forEach(([k, v]) => { form.elements[k].value = v; });
+  useCibil.checked = false;
+  syncCibil();
   syncLoan();
   form.requestSubmit();
 }));
